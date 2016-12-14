@@ -1,0 +1,12 @@
+[Redis]
+protocol="tcp"
+address="127.0.0.1"
+port=6379
+poolsize=10
+
+[Postgres]
+host="127.0.0.1"
+port=5432
+user="groove"
+#key="" database user key should be included here
+database="groovechat"
