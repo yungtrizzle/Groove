@@ -7,7 +7,7 @@ import (
 
 /*
  * hub has a single broadcast channel
- * each message is picked up by a goroutine
+ * each message is picked up by a broadcastwork unit
  * and sent.
  */
 
@@ -48,22 +48,31 @@ func (h *hub) run() {
 			}
 
 		case msg := <-h.broadcast:
+			//store msg before broadcasting
+			data.InsertMessage(msg.text, msg.chatid, msg.room)
+			data.Enqueue(msg.room, msg.chatid, msg.text)
 
-			mems, ok := data.RoomMembers(msg.Room) //slice of room member id's:integer
+			mems, ok := data.RoomMembers(msg.room) //slice of room member id's:integer
 			var clist []Client
 
 			if ok != nil {
 				log.Println(ok)
-				break
+				break //break to beginning of for
 			}
 			//find the relevant clients and build a work unit
 			for _, clyents := range mems {
 
-				con := h.online[clyents]
-				clist = append(clist, con)
+				cid := clyents
+				con := h.online[cid]
+
+				if msg.chatid != con.Chatid {
+					clist = append(clist, con)
+				}
+
 			}
 
 			work := broadcastwork(msg, clist)
+			execv(work) //push work unit into pool channel
 			clist = nil
 		}
 	}

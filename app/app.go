@@ -4,18 +4,26 @@ import (
 	"sync"
 )
 
+var wPool *WorkPool
+
 func init() {
 	broadcastPool = sync.Pool{
 		New: func() interface{} {
 			return &broadcast{}
 		},
 	}
+
+	wPool = NewPool(10) //10 workers in pool
+}
+
+func execv(work *BroadcastWork) {
+	wPool.Exec(work)
 }
 
 type Message struct {
 	chatid int
 	room   int
-	msg    string
+	text   string
 }
 
 func NewMessage(chat int, room int, text string) *Message {
@@ -42,16 +50,32 @@ func (b *broadcast) Close() {
 
 //work unit
 type BroadcastWork struct {
-	bcast broadcast
+	bcast *broadcast
 }
 
 func (b *BroadcastWork) Close() {
 
 	b.bcast.Close()
-
 	//return broadcast to pool
 	broadcastPool.Put(b.bcast)
+}
 
+func (b *BroadcastWork) Execute() {
+
+	sender := b.bcast.msg
+
+	for i, _ := range b.bcast.recievers {
+
+		select {
+		case b.bcast.recievers[i].send <- []byte(sender.text):
+
+		default:
+			close(b.bcast.recievers[i].send)
+		}
+
+	}
+
+	b.Close()
 }
 
 func broadcastwork(msg Message, id []Client) *BroadcastWork {
@@ -66,5 +90,3 @@ func broadcastwork(msg Message, id []Client) *BroadcastWork {
 
 	return &BroadcastWork{bcast: bcaster}
 }
-
-//build the other pool here also
