@@ -5,7 +5,7 @@ import (
 	"fmt"
 	_ "github.com/lib/pq"
 	"log"
-        "strconv"
+	"strconv"
 )
 
 type PostgresConfig struct {
@@ -166,14 +166,14 @@ func GetAllRooms() []string {
 		if ok != nil {
 			log.Println(ok)
 		}
-		roomdesc+=strconv.Itoa(id)
-		roomdesc+="+"
-		roomdesc+=name
-		roomdesc+=desc
-		
-		rooms=append(rooms, roomdesc)
+		roomdesc += strconv.Itoa(id)
+		roomdesc += "+"
+		roomdesc += name
+		roomdesc += desc
 
-		roomdesc=""
+		rooms = append(rooms, roomdesc)
+
+		roomdesc = ""
 	}
 
 	return rooms
@@ -205,15 +205,14 @@ func GetUserRooms(userid int) []string {
 		if ok != nil {
 			log.Println(ok)
 		}
-		
-		roomdesc+=strconv.Itoa(id)
-		roomdesc+="+"
-		roomdesc+=name
-		
 
-		rooms=append(rooms, roomdesc)
+		roomdesc += strconv.Itoa(id)
+		roomdesc += "+"
+		roomdesc += name
 
-		roomdesc=""
+		rooms = append(rooms, roomdesc)
+
+		roomdesc = ""
 	}
 
 	return rooms
@@ -233,15 +232,15 @@ func auth(username, key string) int {
 
 	case ok == sql.ErrNoRows:
 		return 0
-		
+
 	case ok != nil:
 		log.Fatal(ok)
 
-        case keyd == key:
-                return id
-                
-        default:
-            return 0
+	case keyd == key:
+		return id
+
+	default:
+		return 0
 
 	}
 	return 0

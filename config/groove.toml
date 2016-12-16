@@ -8,5 +8,5 @@ poolsize=10
 host="127.0.0.1"
 port=5432
 user="groove"
-#key="" database user key should be included here
+key=" " #database user key should be included here
 database="groovechat"
