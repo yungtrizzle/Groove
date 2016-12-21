@@ -11,25 +11,29 @@ import (
  * and sent.
  */
 
-type hub struct {
+type Hub struct {
 	join      chan *Client
 	leave     chan *Client
-	broadcast chan *Message
-	online    map[int]Client
+	onnline   chan *Client
+	offline   chan *Client
+	broadcast chan Message
+	online    map[int]*Client
 }
 
-func NewHub() *hub {
+func NewHub() *Hub {
 
-	hb := hub{
+	hb := Hub{
 		join:      make(chan *Client),
 		leave:     make(chan *Client),
-		broadcast: make(chan *Message),
-		online:    make(map[int]Client),
+		onnline:   make(chan *Client),
+		offline:   make(chan *Client),
+		broadcast: make(chan Message),
+		online:    make(map[int]*Client),
 	}
 	return &hb
 }
 
-func (h *hub) run() {
+func (h *Hub) run() {
 
 	for {
 		select {
@@ -37,14 +41,21 @@ func (h *hub) run() {
 		case clientn := <-h.join:
 
 			data.EnterRoom(clientn.Room, clientn.User, clientn.Chatid) //ignoring errors here
-			h.online[clientn.Chatid] = clientn
-
 		case clientL := <-h.leave:
 
-			data.Leave(clientL.Room, clientL.User, clientL.Chatid)
-			if _, ok := h.online[clientL.Chatid]; ok {
-				delete(h.online, clientL)
-				close(clientL.send)
+			data.LeaveRoom(clientL.Room, clientL.User, clientL.Chatid)
+
+		case clientno := <-h.onnline:
+
+			if _, ok := h.online[clientno.Chatid]; !ok {
+				h.online[clientno.Chatid] = clientno
+			}
+
+		case cliento := <-h.offline:
+
+			if _, ok := h.online[cliento.Chatid]; ok {
+				delete(h.online, cliento.Chatid)
+				close(cliento.send)
 			}
 
 		case msg := <-h.broadcast:
@@ -52,8 +63,8 @@ func (h *hub) run() {
 			data.InsertMessage(msg.text, msg.chatid, msg.room)
 			data.Enqueue(msg.room, msg.chatid, msg.text)
 
-			mems, ok := data.RoomMembers(msg.room) //slice of room member id's:integer
-			var clist []Client
+			mems, ok := data.RoomMembers(msg.roomName) //slice of room member id's:integer
+			var clist []*Client
 
 			if ok != nil {
 				log.Println(ok)
@@ -72,7 +83,7 @@ func (h *hub) run() {
 			}
 
 			work := broadcastwork(msg, clist)
-			execv(work) //push work unit into pool channel
+			execv(work) //push work unit into pool
 			clist = nil
 		}
 	}

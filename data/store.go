@@ -6,7 +6,7 @@ import (
 	"github.com/mediocregopher/radix.v2/pool"
 	"log"
 	"strconv"
-        "strings"
+	"strings"
 )
 
 type RedisConfig struct {
@@ -46,41 +46,40 @@ func command(cmd string, args ...interface{}) error {
 
 /*client entering and leaving rooms state changes*/
 
-
 func EnterRoom(room, chatid string, id int) error {
 
-        chatid+=":"
-        chatid+=strconv.Itoa(id)
+	chatid += ":"
+	chatid += strconv.Itoa(id)
 	return command("SADD", room, chatid)
 }
 
 func LeaveRoom(room, chatid string, id int) error {
-        chatid+=":"
-        chatid+=strconv.Itoa(id)
+	chatid += ":"
+	chatid += strconv.Itoa(id)
 	return command("SREM", room, chatid)
 }
 
-func RoomMembers(room string) ([]int,error) {
-    
-    var members []int
-    resp := redispool.Cmd("SMEMBERS",room)
-    
-    mem,ok := resp.List()
-    
-    if ok != nil {
+func RoomMembers(room string) ([]int, error) {
+
+	var members []int
+	resp := redispool.Cmd("SMEMBERS", room)
+
+	mem, ok := resp.List()
+
+	if ok != nil {
 		return members, ok
 	}
-        
-        for _, sid:=range mem{
-            
-            split:=strings.Split(sid,":")
-            
-            id,_:=strconv.Atoi(split[1])
-            
-            members=append(members, id)
-        }
-        
-    return members,nil
+
+	for _, sid := range mem {
+
+		split := strings.Split(sid, ":")
+
+		id, _ := strconv.Atoi(split[1])
+
+		members = append(members, id)
+	}
+
+	return members, nil
 }
 
 /*

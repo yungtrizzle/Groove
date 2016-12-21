@@ -1,6 +1,7 @@
 package data
 
 import (
+        "errors"
 	"database/sql"
 	"fmt"
 	_ "github.com/lib/pq"
@@ -51,7 +52,7 @@ func RegisterUser(username, key string) error {
 	insertstr := `INSERT INTO users (username, password)
                   VALUES ($1,$2)
                 `
-
+	//schema defaults to user being unique
 	stmt, err := db.Prepare(insertstr)
 
 	if err != nil {
@@ -218,7 +219,7 @@ func GetUserRooms(userid int) []string {
 	return rooms
 }
 
-func auth(username, key string) int {
+func Auth(username, key string) (int, error) {
 
 	auth := `SELECT user_id, key from users 
         WHERE username=$1`
@@ -231,17 +232,17 @@ func auth(username, key string) int {
 	switch {
 
 	case ok == sql.ErrNoRows:
-		return 0
+		return 0,ok
 
 	case ok != nil:
 		log.Fatal(ok)
 
 	case keyd == key:
-		return id
+		return id,nil
 
 	default:
-		return 0
+		return 0,ok
 
 	}
-	return 0
+	return 0, errors.New("DB:Unknown Failure")
 }

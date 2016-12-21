@@ -2,7 +2,9 @@ package main
 
 import (
 	"github.com/pelletier/go-toml"
+	"github.com/yungtrizzle/groove/app"
 	"github.com/yungtrizzle/groove/data"
+	"github.com/yungtrizzle/groove/web"
 	"log"
 )
 
@@ -31,5 +33,8 @@ func main() {
 
 	data.InitRedis(&rcfg)
 	data.InitPostgres(&pcfg)
+
+	app.StartPool()
+	web.Router()
 
 }
