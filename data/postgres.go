@@ -1,7 +1,6 @@
 package data
 
 import (
-        "errors"
 	"database/sql"
 	"fmt"
 	_ "github.com/lib/pq"
@@ -47,6 +46,29 @@ func InitPostgres(cfg *PostgresConfig) error {
 /*Insertion funcs here*/
 
 /*key should be hashed before transport from client*/
+func ActivateUser(username string) error{
+    
+    upd := `UPDATE users SET activated='t' WHERE username=$1`
+    
+    stmt, err := db.Prepare(upd)
+
+	if err != nil {
+		log.Println(err)
+                return err
+	}
+
+	defer stmt.Close()
+
+	_, ok := stmt.Exec(username)
+
+	if ok != nil {
+		log.Println(ok)
+		return ok
+	}
+
+	return nil
+    
+}
 func RegisterUser(username, key string) error {
 
 	insertstr := `INSERT INTO users (username, password)
@@ -57,6 +79,7 @@ func RegisterUser(username, key string) error {
 
 	if err != nil {
 		log.Println(err)
+                return err
 	}
 
 	defer stmt.Close()
@@ -64,7 +87,6 @@ func RegisterUser(username, key string) error {
 	_, ok := stmt.Exec(username, key)
 
 	if ok != nil {
-		log.Println(ok)
 		return ok
 	}
 
@@ -143,6 +165,29 @@ func InsertMessage(message string, userid int, groupid int) error {
 
 /*Retrieval funcs*/
 
+func IsActivated(user string) bool{
+    
+    qryy := `SELECT activated FROM users 
+            WHERE username=$1`
+            
+        row := db.QueryRow(qryy, user)
+        
+        var active bool
+      
+        
+        ok:=row.Scan(&active)
+        
+	if ok == sql.ErrNoRows{
+		return false
+		
+        }else if ok != nil{
+		log.Fatal(ok)
+        }
+        
+	return active
+    
+}
+
 func GetAllRooms() []string {
 
 	roomsqry := `SELECT group_id, name, desc_ FROM rooms`
@@ -220,29 +265,23 @@ func GetUserRooms(userid int) []string {
 }
 
 func Auth(username, key string) (int, error) {
-
-	auth := `SELECT user_id, key from users 
+    
+	auth := `SELECT user_id, password FROM users 
         WHERE username=$1`
 
-	var keyd string
-	var id int
-
-	ok := db.QueryRow(auth, username).Scan(&id, &keyd)
-
-	switch {
-
-	case ok == sql.ErrNoRows:
-		return 0,ok
-
-	case ok != nil:
+	row := db.QueryRow(auth, username)
+        
+        var keyd string
+        var id int
+        
+        ok:=row.Scan(&id, &keyd)
+        
+	if ok == sql.ErrNoRows{
+		return -1,ok
+		
+        }else if ok != nil{
 		log.Fatal(ok)
-
-	case keyd == key:
-		return id,nil
-
-	default:
-		return 0,ok
-
-	}
-	return 0, errors.New("DB:Unknown Failure")
+        }
+        
+	return id,nil
 }

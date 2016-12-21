@@ -3,6 +3,7 @@
 package data
 
 import (
+        "errors"
 	"github.com/mediocregopher/radix.v2/pool"
 	"log"
 	"strconv"
@@ -29,7 +30,7 @@ func InitRedis(cfg *RedisConfig) error {
 		return ok
 	}
 
-	log.Println("Succesfully Init'd Redis")
+	log.Println("Succesfully Init'd Redis")        
 	return nil
 }
 
@@ -43,6 +44,35 @@ func command(cmd string, args ...interface{}) error {
 
 	return nil
 }
+
+
+func CacheEmailActivation(activation, usser string) error{
+    return command("SET", usser, activation,"EX 86400")
+}
+
+
+func RetrieveToken(tok, user string) error{
+    
+    resp := redispool.Cmd("GET", user)
+
+	if resp.Err != nil {
+		return resp.Err
+	}
+	
+	code := resp.String()
+        /*
+        if err != nil{
+            log.Println("Retrieve:",err)
+        } */
+        
+        if code == tok {
+            return nil
+        }
+        
+        return errors.New("No Token Found")
+    
+}
+
 
 /*client entering and leaving rooms state changes*/
 
