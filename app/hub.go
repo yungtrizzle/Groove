@@ -63,7 +63,6 @@ func (h *Hub) run() {
 			data.InsertMessage(msg.text, msg.chatid, msg.room)
 			data.Enqueue(msg.room, msg.chatid, msg.text)
                             
-                        log.Println(msg.text)
                         
 			mems, ok := data.RoomMembers(msg.roomName) //slice of room member id's:integer
 			var clist []*Client

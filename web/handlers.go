@@ -40,18 +40,19 @@ func serveWs(hub *app.Hub, w http.ResponseWriter, r *http.Request) {
 		return
 	}
         
-        app.DeleteTicket(tik)
+        //app.DeleteTicket(tik)
         
 	sess := app.NewSession(hub)
 
 	client := app.NewClient(clt.User,
-		"",
+		"PublicGroove",
 		clt.Chat,
-		0,
+		1,
 		sess,
 		conn)
 
 	client.Session.Onnline(client)
+        client.Session.Join(client)
 	go client.WritePump()
 	go client.ReadPump()
 }
