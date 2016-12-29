@@ -54,6 +54,7 @@ func NewClient(user, room string, chat, grp int,
 
 func (c *Client) ReadPump() {
 	defer func() {
+		c.Session.Leave(c)
 		c.Session.Offline(c)
 		c.conn.Close()
 	}()
@@ -82,6 +83,8 @@ func (c *Client) WritePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
+		c.Session.Leave(c)
+		c.Session.Offline(c)
 		c.conn.Close()
 	}()
 	for {

@@ -33,9 +33,8 @@ func main() {
 
 	data.InitRedis(&rcfg)
 	data.InitPostgres(&pcfg)
-        
-        web.Router()
+
+	web.Router()
 	app.StartPool()
-	
 
 }

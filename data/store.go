@@ -3,7 +3,7 @@
 package data
 
 import (
-        "errors"
+	"errors"
 	"github.com/mediocregopher/radix.v2/pool"
 	"log"
 	"strconv"
@@ -30,7 +30,7 @@ func InitRedis(cfg *RedisConfig) error {
 		return ok
 	}
 
-	log.Println("Succesfully Init'd Redis")        
+	log.Println("Succesfully Init'd Redis")
 	return nil
 }
 
@@ -45,34 +45,64 @@ func command(cmd string, args ...interface{}) error {
 	return nil
 }
 
-
-func CacheEmailActivation(activation, usser string) error{
-    return command("SET", usser, activation,"EX 86400")
+func CacheEmailActivation(usser string, activation string) error {
+	return command("SETEX", usser, "86400", activation)
 }
 
+func CacheWSTicket(usr string, tik string) error {
+	return command("SETEX", usr, "5184000", tik)
+}
 
-func RetrieveToken(tok, user string) error{
-    
-    resp := redispool.Cmd("GET", user)
+func RetrieveToken(user string, tok string) error {
+
+	resp := redispool.Cmd("GET", user)
 
 	if resp.Err != nil {
 		return resp.Err
 	}
-	
-	code := resp.String()
-        /*
-        if err != nil{
-            log.Println("Retrieve:",err)
-        } */
-        
-        if code == tok {
-            return nil
-        }
-        
-        return errors.New("No Token Found")
-    
+
+	code, ok := resp.Str()
+
+	if ok != nil {
+		log.Println("Retrieval Failure: ", ok)
+		return ok
+	}
+
+	if code != tok {
+		return errors.New("No Token Found")
+	}
+
+	res := redispool.Cmd("DEL", user)
+
+	if res.Err != nil {
+		log.Println(res.Err)
+	}
+
+	return nil
+
 }
 
+func RetrieveTicket(us string, tok string) error {
+
+	resp := redispool.Cmd("GET", us)
+
+	if resp.Err != nil {
+		return resp.Err
+	}
+
+	code, ok := resp.Str()
+
+	if ok != nil {
+		log.Println("Retrieval Failure: ", ok)
+		return ok
+	}
+
+	if code != tok {
+		return errors.New("No Token Found")
+	}
+
+	return nil
+}
 
 /*client entering and leaving rooms state changes*/
 

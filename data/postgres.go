@@ -46,15 +46,15 @@ func InitPostgres(cfg *PostgresConfig) error {
 /*Insertion funcs here*/
 
 /*key should be hashed before transport from client*/
-func ActivateUser(username string) error{
-    
-    upd := `UPDATE users SET activated='t' WHERE username=$1`
-    
-    stmt, err := db.Prepare(upd)
+func ActivateUser(username string) error {
+
+	upd := `UPDATE users SET activated='t' WHERE username=$1`
+
+	stmt, err := db.Prepare(upd)
 
 	if err != nil {
 		log.Println(err)
-                return err
+		return err
 	}
 
 	defer stmt.Close()
@@ -67,7 +67,7 @@ func ActivateUser(username string) error{
 	}
 
 	return nil
-    
+
 }
 func RegisterUser(username, key string) error {
 
@@ -79,7 +79,7 @@ func RegisterUser(username, key string) error {
 
 	if err != nil {
 		log.Println(err)
-                return err
+		return err
 	}
 
 	defer stmt.Close()
@@ -165,27 +165,26 @@ func InsertMessage(message string, userid int, groupid int) error {
 
 /*Retrieval funcs*/
 
-func IsActivated(user string) bool{
-    
-    qryy := `SELECT activated FROM users 
+func IsActivated(user string) bool {
+
+	qryy := `SELECT activated FROM users 
             WHERE username=$1`
-            
-        row := db.QueryRow(qryy, user)
-        
-        var active bool
-      
-        
-        ok:=row.Scan(&active)
-        
-	if ok == sql.ErrNoRows{
+
+	row := db.QueryRow(qryy, user)
+
+	var active bool
+
+	ok := row.Scan(&active)
+
+	if ok == sql.ErrNoRows {
 		return false
-		
-        }else if ok != nil{
+
+	} else if ok != nil {
 		log.Fatal(ok)
-        }
-        
+	}
+
 	return active
-    
+
 }
 
 func GetAllRooms() []string {
@@ -265,23 +264,23 @@ func GetUserRooms(userid int) []string {
 }
 
 func Auth(username, key string) (int, error) {
-    
+
 	auth := `SELECT user_id, password FROM users 
         WHERE username=$1`
 
 	row := db.QueryRow(auth, username)
-        
-        var keyd string
-        var id int
-        
-        ok:=row.Scan(&id, &keyd)
-        
-	if ok == sql.ErrNoRows{
-		return -1,ok
-		
-        }else if ok != nil{
+
+	var keyd string
+	var id int
+
+	ok := row.Scan(&id, &keyd)
+
+	if ok == sql.ErrNoRows {
+		return -1, ok
+
+	} else if ok != nil {
 		log.Fatal(ok)
-        }
-        
-	return id,nil
+	}
+
+	return id, nil
 }

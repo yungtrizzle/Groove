@@ -8,11 +8,6 @@ var broadcastPool sync.Pool
 var wPool *WorkPool
 var Bhub *Hub
 
-var token = struct{
-    sync.RWMutex
-    wstokens map[string]KnownClient
-}{ wstokens: make(map[string]KnownClient)}
-
 func init() {
 	broadcastPool = sync.Pool{
 		New: func() interface{} {
@@ -21,7 +16,7 @@ func init() {
 	}
 
 	wPool = NewPool(10) //10 workers in pool, should be configurable
-        
+
 	Bhub = NewHub()
 	go Bhub.run()
 }

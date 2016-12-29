@@ -62,8 +62,7 @@ func (h *Hub) run() {
 			//store msg before broadcasting
 			data.InsertMessage(msg.text, msg.chatid, msg.room)
 			data.Enqueue(msg.room, msg.chatid, msg.text)
-                            
-                        
+
 			mems, ok := data.RoomMembers(msg.roomName) //slice of room member id's:integer
 			var clist []*Client
 
@@ -72,20 +71,25 @@ func (h *Hub) run() {
 				break //break to beginning of for
 			}
 			//find the relevant clients and build a work unit
-			for _, clyents := range mems {
 
-				cid := clyents
-				con := h.online[cid]
+			if len(mems) > 1 { //anybody online?
 
-				if msg.chatid != con.Chatid {
-					clist = append(clist, con)
+				for _, clyents := range mems {
+
+					cid := clyents
+					con := h.online[cid]
+
+					if msg.chatid != con.Chatid {
+						clist = append(clist, con)
+					}
+
 				}
 
-			}
+				work := broadcastwork(msg, clist)
+				execv(work) //push work unit into pool
+				clist = nil
 
-			work := broadcastwork(msg, clist)
-			execv(work) //push work unit into pool
-			clist = nil
+			}
 		}
 	}
 
