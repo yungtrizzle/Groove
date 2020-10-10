@@ -16,7 +16,6 @@ type WorkPool struct {
 	size  int
 	tasks chan Task
 	kill  chan struct{}
-	wg    sync.WaitGroup
 }
 
 func NewPool(size int) *WorkPool {
@@ -29,7 +28,7 @@ func NewPool(size int) *WorkPool {
 }
 
 func (p *WorkPool) worker() {
-	defer p.wg.Done()
+
 	for {
 		select {
 		case task, ok := <-p.tasks:
@@ -39,6 +38,16 @@ func (p *WorkPool) worker() {
 			task.Execute()
 		case <-p.kill:
 			return
+		
+		default:
+			p.mu.Lock()
+			wt := len(p.tasks)
+			p.mu.Unlock()
+
+			if wt == 0 {
+				p.size--
+				return
+			}
 		}
 	}
 }
@@ -48,7 +57,6 @@ func (p *WorkPool) Resize(n int) {
 	defer p.mu.Unlock()
 	for p.size < n {
 		p.size++
-		p.wg.Add(1)
 		go p.worker()
 	}
 	for p.size > n {
@@ -59,10 +67,19 @@ func (p *WorkPool) Resize(n int) {
 
 func (p *WorkPool) Close() {
 	close(p.tasks)
+	close(p.kill)
 }
 
 func (p *WorkPool) Wait() {
-	p.wg.Wait()
+	for {
+		p.mu.Lock()
+		size := p.size
+		p.mu.Unlock()
+
+		if size == 0 {
+			return
+		}
+	}
 }
 
 func (p *WorkPool) Exec(task Task) {
